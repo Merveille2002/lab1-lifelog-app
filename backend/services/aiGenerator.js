@@ -20,7 +20,7 @@ Suggère un film adapté avec une explication.
         ]
       },
       {
-        headers: {
+        headers: { 
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json'
         }

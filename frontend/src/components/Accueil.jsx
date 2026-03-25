@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './Accueil.css';
-
+import { searchMovie, searchRecipe, generateAIResponse, generateAIResponseForRecipes } from '../services/api';
+import { showAllRecommendations, insertRecommendation, deleteRecommendation} from '../services/crud';
 
 
 const Accueil = () => {
@@ -27,6 +28,9 @@ const Accueil = () => {
     const [skillLevel, setSkillLevel] = useState("");
     const [cookingFor, setCookingFor] = useState("");
 
+    const [aiResponse, setAiResponse] = useState("");
+    const [isGenerating, setIsGenerating] = useState(false);
+
     useEffect(() => {
         const fetchRecommendations = async () => {
             const recommendations = await showAllRecommendations(category);
@@ -40,82 +44,118 @@ const Accueil = () => {
     }, [category])
 
     
-    const [aiResponse, setAiResponse] = useState("");
-    const [isGenerating, setIsGenerating] = useState(false);
 
     const chercher = async () => {
         if (category === "movies") {
-            
+            const res = await searchMovie(movie);
+            setSuggestedMovies(res.results || []);
         } else {
-            
+             const res = await searchRecipe(recipe);
+            setSuggestedRecipes(res.results || []);
         }
     }
 
     const genererReponse = async () => {
         setIsGenerating();
         try {
-            let params;
+            
             let response;
             if (category === "movies") {
                 
-                setSelectedMovies();
-                setSuggestedMovies();
+                setSelectedMovies(selectedMovies);
+                    response = await generateAIResponse({
+                    selectedMovies,
+                    mood,
+                    watchTime,
+                    watchWith
+                });
+
+                setSuggestedMovies(response.suggestedMovies || []);
+                setAiResponse(response.response || "");
             } else {
-                params = { selectedRecipes: JSON.stringify(selectedRecipes), diet, timeAvailable, budget, skillLevel, cookingFor };
-                response = 
-                setSelectedRecipes();
-                setSuggestedRecipes();
+                const params = {
+                selectedRecipes: JSON.stringify(selectedRecipes),
+                diet,
+                timeAvailable,
+                budget,
+                skillLevel,
+                cookingFor
+            };
+            setSelectedRecipes(selectedRecipes);
+            response = await generateAIResponseForRecipes(params);
+            setSuggestedRecipes(response.suggestedRecipes || []);
+            setAiResponse(response.response || "");
             }
-            setAiResponse();
+           
         } finally {
-            setIsGenerating();
+            setIsGenerating(false);
         }
     }
 
     const handleSelect = (title, checked) => {
         if (category === "movies") {
-            if (checked) setSelectedMovies([]);
-            else setSelectedMovies();
+          if (checked) setSelectedMovies(selectedMovies.filter(t => t !== title));
+            else setSelectedMovies([...selectedMovies, title]);
         } else {
-            if (checked) setSelectedRecipes([]);
-            else setSelectedRecipes();
+            if (checked) setSelectedRecipes(selectedRecipes.filter(t => t !== title));
+            else setSelectedRecipes([...selectedRecipes, title]);
         }
     };
 
     const sauvegarderRecommendation = async () => {
+      if (!aiResponse) return;
         switch (category) {
             case "movies":
-                
+                await sauvegarderFilmRecommendation();
+
                 break;
             case "recipes":
-                
+                await sauvegarderRecetteRecommendation();
                 break;
             default:
                 console.error("Unknown category:", category);
+                break;
         }
     }
 
     const sauvegarderFilmRecommendation = async () => {
         
-        setSavedFilms();
+        const newRec = {
+            category: "movies",
+            title: selectedMovies.join(", "),
+            mood,
+            watchTime,
+            watchWith,
+            aiSuggestion: aiResponse
+        };
+        const saved = await insertRecommendation(newRec);
+        setSavedFilms(prev => [saved.result, ...prev]);
+        setAiResponse("");
+        setSelectedMovies([]);
     }
 
     const sauvegarderRecetteRecommendation = async () => {
-        setSavedRecipes();
-        setSavedFilms();
+         const newRec = {
+            category: "recipes",
+            title: selectedRecipes.join(", "),
+            diet,
+            timeAvailable,
+            budget,
+            skillLevel,
+            cookingFor,
+            aiSuggestion: aiResponse
+        };
+        const saved = await insertRecommendation(newRec);
+        setSavedRecipes(prev => [saved.result, ...prev]);
+        setAiResponse("");
+        setSelectedRecipes([]);
     }
 
-    const deleteRecommendation = async (id) => {
-        
-        if (category === "movies") {
-
-            setSavedFilms();
-        } else {
-
-            setSavedRecipes();
-        }
+    const deleteRecommendationHandler = async (id) => {
+        await deleteRecommendation(id);
+        if (category === "movies") setSavedFilms(prev => prev.filter(f => f._id !== id));
+        else setSavedRecipes(prev => prev.filter(r => r._id !== id));
     }
-
     return (
         <div className="accueil-container">
             <header className="accueil-header">
