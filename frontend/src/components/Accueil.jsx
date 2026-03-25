@@ -93,15 +93,20 @@ const Accueil = () => {
     }
 
     const handleSelect = (title, checked) => {
-        if (category === "movies") {
-          if (checked) setSelectedMovies(selectedMovies.filter(t => t !== title));
-            else setSelectedMovies([...selectedMovies, title]);
+    if (category === "movies") {
+        if (checked) {
+            setSelectedMovies(prev => [...prev, title]);
         } else {
-            if (checked) setSelectedRecipes(selectedRecipes.filter(t => t !== title));
-            else setSelectedRecipes([...selectedRecipes, title]);
+            setSelectedMovies(prev => prev.filter(t => t !== title));
         }
-    };
-
+    } else {
+        if (checked) {
+            setSelectedRecipes(prev => [...prev, title]);
+        } else {
+            setSelectedRecipes(prev => prev.filter(t => t !== title));
+        }
+    }
+};
     const sauvegarderRecommendation = async () => {
       if (!aiResponse) return;
         switch (category) {
