@@ -17,7 +17,7 @@ let db;
 async function connectDB() {
   if (!db) {
     await client.connect();
-    db = client.db("");
+    db = client.db("lifelog");
     console.log("Connected to MongoDB");
   }
   return db;
