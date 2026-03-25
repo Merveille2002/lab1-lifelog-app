@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './Accueil.css';
 import { searchMovie, searchRecipe, generateAIResponse, generateAIResponseForRecipes } from '../services/api';
-import { showAllRecommendations, insertRecommendation, deleteRecommendation} from '../services/crud';
+import { showAllRecommendations, insertRecommendation, deleteRecommendation as deleteRec} from '../services/crud';
 
 
 const Accueil = () => {
@@ -156,11 +156,15 @@ const Accueil = () => {
         setSelectedRecipes([]);
     }
 
-    const deleteRecommendationHandler = async (id) => {
-        await deleteRecommendation(id);
-        if (category === "movies") setSavedFilms(prev => prev.filter(f => f._id !== id));
-        else setSavedRecipes(prev => prev.filter(r => r._id !== id));
+    const deleteRecommendation = async (id) => {
+    await deleteRec(id);
+
+    if (category === "movies") {
+        setSavedFilms(prev => prev.filter(item => item._id !== id));
+    } else {
+        setSavedRecipes(prev => prev.filter(item => item._id !== id));
     }
+};
     return (
         <div className="accueil-container">
             <header className="accueil-header">
