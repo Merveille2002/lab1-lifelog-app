@@ -74,7 +74,7 @@ const Accueil = () => {
                 setAiResponse(response.response || "");
             } else {
                 const params = {
-                selectedRecipes: JSON.stringify(selectedRecipes),
+                selectedRecipes: selectedRecipes,
                 diet,
                 timeAvailable,
                 budget,
